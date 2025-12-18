@@ -1,0 +1,30 @@
+import os
+from kaznlp.tokenization.tokhmm import TokenizerHMM
+from kaznlp.lid.lidnb import LidNB
+
+
+tok_mdl = os.path.join('kaznlp', 'tokenization', 'tokhmm.mdl')
+lid_mdl = os.path.join('kaznlp', 'lid', 'char.mdl')
+
+
+tokenizer = TokenizerHMM(model=tok_mdl)
+landetector = LidNB(word_mdl=None, char_mdl=lid_mdl)
+
+
+def has_code_switch(text):
+    sents_tokens = tokenizer.tokenize(text)
+    langs_found = set()
+
+    for sent in sents_tokens:
+        if not sent:
+            continue
+
+        lang = landetector.predict([t.lower() for t in sent])
+        if lang:
+            langs_found.add(lang)
+
+    return len(langs_found) > 1, langs_found
+
+print(has_code_switch("Жаксы")) # (False, {'kaz'})
+print(has_code_switch("Неге нельзя, еще қалай можно")) # (True, {'kaz', 'rus'})
+print(has_code_switch("Отдыхай!")) # (False, {'rus'})
